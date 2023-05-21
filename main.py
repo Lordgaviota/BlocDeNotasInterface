@@ -2,6 +2,7 @@ from tkinter import *
 import requests
 from tkinter import messagebox
 
+
 def mostrar_nota():
     response = requests.get("http://localhost:25030/nota/consultar", json={"id": nota_id.get()})
     nota = response.json()
@@ -22,6 +23,7 @@ def agregar_nota():
     nueva_ventana.title("Nueva Nota")
     nueva_ventana.geometry("400x300")
 
+    # Crear elementos de la ventana
     titulo_label = Label(nueva_ventana, text="Título:")
     titulo_label.pack()
     titulo_entry = Entry(nueva_ventana)
@@ -32,7 +34,8 @@ def agregar_nota():
     descripcion_text = Text(nueva_ventana, height=10)
     descripcion_text.pack()
 
-    guardar_button = Button(nueva_ventana, text="Guardar", command=lambda: guardar_nota_wrapper(titulo_entry, descripcion_text))
+    guardar_button = Button(nueva_ventana, text="Guardar",
+                            command=lambda: guardar_nota_wrapper(titulo_entry, descripcion_text))
     guardar_button.pack()
 
     # Actualizar el menú de notas
@@ -71,10 +74,12 @@ def mostrar_notas():
     response = requests.get("http://localhost:25030/nota/consultarTodos")
     notas = response.json()
 
+    # Crear el canvas y el scrollbar para hacer la lista de notas scrollable
     canvas = Canvas(window, bg="white")
     scrollbar = Scrollbar(window, orient="vertical", command=canvas.yview)
     scrollable_frame = Frame(canvas)
 
+    # Configurar el scrollbar y el scrollregion del canvas
     scrollable_frame.bind(
         "<Configure>",
         lambda e: canvas.configure(
@@ -90,17 +95,18 @@ def mostrar_notas():
         descripcion = nota["descripcion"]
         fecha = nota["fecha"]
 
+        # Crear un frame para cada nota
         nota_frame = Frame(scrollable_frame, bg="white", padx=120, pady=50)
         nota_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
         titulo_label = Label(nota_frame, text=titulo, font=("Arial", 14, "bold"), fg="navy")
-        titulo_label.pack()
+        titulo_label.pack(pady=(10, 5))
 
         descripcion_label = Label(nota_frame, text=descripcion, font=("Arial", 12), wraplength=200, justify="center")
-        descripcion_label.pack(pady=5)
+        descripcion_label.pack(pady=(5, 10))  # Agregar espacio de separación después del texto de descripción
 
         fecha_label = Label(nota_frame, text=f"Fecha: {fecha}", font=("Arial", 10), fg="gray")
-        fecha_label.pack()
+        fecha_label.pack(pady=(5, 20))
 
         eliminar_button = Button(nota_frame, text="Eliminar", command=lambda titulo=titulo: eliminar_nota(titulo))
         eliminar_button.pack()
