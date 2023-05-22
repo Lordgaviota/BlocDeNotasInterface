@@ -1,6 +1,7 @@
 from tkinter import *
 import requests
 from tkinter import messagebox
+from datetime import datetime
 
 
 def mostrar_nota():
@@ -10,7 +11,15 @@ def mostrar_nota():
     titulo_label.config(text=nota["titulo"])
     descripcion_text.delete(1.0, END)
     descripcion_text.insert(END, nota["descripcion"])
-    fecha_label.config(text="Fecha de creación: " + nota["fecha"])
+    fecha_label.config(text="Fecha de creación: " + obtener_fecha_formateada(nota["fecha"]))
+
+
+def obtener_fecha_formateada(fecha):
+    fecha_objeto = datetime.fromisoformat(fecha)
+    dia = fecha_objeto.strftime("%d")
+    mes = fecha_objeto.strftime("%m")
+    anio = fecha_objeto.strftime("%Y")
+    return f"{dia}-{mes}-{anio}"
 
 
 def guardar_nota_wrapper(titulo_entry, descripcion_text):
@@ -24,17 +33,17 @@ def agregar_nota():
     nueva_ventana.geometry("400x300")
 
     # Crear elementos de la ventana
-    titulo_label = Label(nueva_ventana, text="Título:")
+    titulo_label = Label(nueva_ventana, text="Título:", font=("Arial", 12))
     titulo_label.pack()
-    titulo_entry = Entry(nueva_ventana)
+    titulo_entry = Entry(nueva_ventana, font=("Arial", 12))
     titulo_entry.pack()
 
-    descripcion_label = Label(nueva_ventana, text="Descripción:")
+    descripcion_label = Label(nueva_ventana, text="Descripción:", font=("Arial", 12))
     descripcion_label.pack()
-    descripcion_text = Text(nueva_ventana, height=10)
+    descripcion_text = Text(nueva_ventana, height=10, font=("Arial", 12))
     descripcion_text.pack()
 
-    guardar_button = Button(nueva_ventana, text="Guardar",
+    guardar_button = Button(nueva_ventana, text="Guardar", font=("Arial", 12),
                             command=lambda: guardar_nota_wrapper(titulo_entry, descripcion_text))
     guardar_button.pack()
 
@@ -66,6 +75,43 @@ def eliminar_nota(titulo):
         messagebox.showerror("Error", "Ocurrió un error al eliminar la nota.")
 
 
+def actualizar_nota(titulo, descripcion):
+    ventana_actualizar = Toplevel(window)
+    ventana_actualizar.title("Actualizar Nota")
+    ventana_actualizar.geometry("400x300")
+
+    titulo_label = Label(ventana_actualizar, text="Título:", font=("Arial", 12))
+    titulo_label.pack()
+    titulo_entry = Entry(ventana_actualizar, font=("Arial", 12))
+    titulo_entry.pack()
+    titulo_entry.insert(END, titulo)
+
+    descripcion_label = Label(ventana_actualizar, text="Descripción:", font=("Arial", 12))
+    descripcion_label.pack()
+    descripcion_text = Text(ventana_actualizar, height=10, font=("Arial", 12))
+    descripcion_text.pack()
+    descripcion_text.insert(END, descripcion)
+
+    actualizar_button = Button(ventana_actualizar, text="Actualizar", font=("Arial", 12),
+                               command=lambda: guardar_actualizacion(titulo_entry.get(),
+                                                                     descripcion_text.get("1.0", END),
+                                                                     descripcion_text))
+    actualizar_button.pack()
+
+
+def guardar_actualizacion(titulo, descripcion, descripcion_text):
+    notaDTO = {"titulo": titulo, "descripcion": descripcion}
+
+    response = requests.put("http://localhost:25030/nota/actualizar", json=notaDTO)
+
+    if response.status_code == 200:
+        messagebox.showinfo("Nota Actualizada", "La nota ha sido actualizada exitosamente.")
+        ventana_actualizar.destroy()
+        mostrar_notas()
+    else:
+        messagebox.showerror("Error", "Ocurrió un error al actualizar la nota.")
+
+
 def mostrar_notas():
     for frame in window.winfo_children():
         if frame != menu_frame:
@@ -74,12 +120,11 @@ def mostrar_notas():
     response = requests.get("http://localhost:25030/nota/consultarTodos")
     notas = response.json()
 
-    # Crear el canvas y el scrollbar para hacer la lista de notas scrollable
+    # Crear el canvas y el scrollbar
     canvas = Canvas(window, bg="white")
     scrollbar = Scrollbar(window, orient="vertical", command=canvas.yview)
     scrollable_frame = Frame(canvas)
 
-    # Configurar el scrollbar y el scrollregion del canvas
     scrollable_frame.bind(
         "<Configure>",
         lambda e: canvas.configure(
@@ -95,21 +140,27 @@ def mostrar_notas():
         descripcion = nota["descripcion"]
         fecha = nota["fecha"]
 
-        # Crear un frame para cada nota
         nota_frame = Frame(scrollable_frame, bg="white", padx=120, pady=50)
         nota_frame.pack(pady=10, padx=10, fill="both", expand=True)
 
         titulo_label = Label(nota_frame, text=titulo, font=("Arial", 14, "bold"), fg="navy")
-        titulo_label.pack(pady=(10, 5))
+        titulo_label.pack()
 
-        descripcion_label = Label(nota_frame, text=descripcion, font=("Arial", 12), wraplength=200, justify="center")
-        descripcion_label.pack(pady=(5, 10))  # Agregar espacio de separación después del texto de descripción
+        descripcion_text = Text(nota_frame, height=5, width=30, font=("Arial", 12))
+        descripcion_text.insert(END, descripcion)
+        descripcion_text.pack(pady=5)
 
-        fecha_label = Label(nota_frame, text=f"Fecha: {fecha}", font=("Arial", 10), fg="gray")
-        fecha_label.pack(pady=(5, 20))
+        fecha_label = Label(nota_frame, text="Fecha: " + obtener_fecha_formateada(fecha), font=("Arial", 10), fg="gray")
+        fecha_label.pack()
 
-        eliminar_button = Button(nota_frame, text="Eliminar", command=lambda titulo=titulo: eliminar_nota(titulo))
-        eliminar_button.pack()
+        eliminar_button = Button(nota_frame, text="Eliminar", font=("Arial", 12),
+                                 command=lambda titulo=titulo: eliminar_nota(titulo))
+        eliminar_button.pack(side="left", padx=30, pady=20)
+
+        actualizar_button = Button(nota_frame, text="Actualizar", font=("Arial", 12),
+                                   command=lambda titulo=titulo, descripcion_text=descripcion_text: actualizar_nota(
+                                       titulo, descripcion_text.get("1.0", END)))
+        actualizar_button.pack(side="left", padx=50)
 
     canvas.pack(side="left", fill="both", expand=True)
     scrollbar.pack(side="right", fill="y")
@@ -124,7 +175,8 @@ window = Tk()
 window.title("Notas")
 
 # Establecer el tamaño de la ventana
-window.geometry("400x600")
+window.geometry("560x600")
+window.resizable(False, False)  # Prohibir redimensionar la ventana
 
 # Fondo de la ventana
 window.configure(bg="lightgray")
@@ -135,26 +187,11 @@ menu_frame.pack(pady=10)
 opciones_menu = Menu(window)
 window.config(menu=opciones_menu)
 
-agregar_button = Button(menu_frame, text="Agregar", command=agregar_nota)
+agregar_button = Button(menu_frame, text="Agregar", font=("Arial", 12), command=agregar_nota)
 agregar_button.pack(side="left")
 
-scrollable_frame = Frame(window)
-scrollable_frame.pack(fill="both", expand=True)
-
-canvas = Canvas(scrollable_frame, bg="white")
-scrollbar = Scrollbar(scrollable_frame, orient="vertical", command=canvas.yview)
-
-# Agregar el scrollbar al canvas
-scrollable_frame.bind(
-    "<Configure>",
-    lambda e: canvas.configure(
-        scrollregion=canvas.bbox("all")
-    )
-)
-
-canvas.configure(yscrollcommand=scrollbar.set)
-canvas.pack(side="left", fill="both", expand=True)
-scrollbar.pack(side="right", fill="y")
+salir_button = Button(menu_frame, text="Salir", font=("Arial", 12), command=window.quit)
+salir_button.pack(side="left")
 
 mostrar_notas()
 
