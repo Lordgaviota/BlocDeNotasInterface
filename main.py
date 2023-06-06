@@ -83,6 +83,7 @@ def eliminar_nota(titulo):
 
 # Funcion que actualiza el menu de notas
 def actualizar_nota(titulo, descripcion):
+    global ventana_actualizar
     ventana_actualizar = Toplevel(window)
     ventana_actualizar.title("Actualizar Nota")
     ventana_actualizar.geometry("400x300")
