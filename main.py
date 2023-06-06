@@ -4,6 +4,7 @@ from tkinter import messagebox
 from datetime import datetime
 
 
+# Funcion que muestra una nota
 def mostrar_nota():
     response = requests.get("http://localhost:25030/nota/consultar", json={"id": nota_id.get()})
     nota = response.json()
@@ -14,6 +15,7 @@ def mostrar_nota():
     fecha_label.config(text="Fecha de creación: " + obtener_fecha_formateada(nota["fecha"]))
 
 
+# Funcion que obtiene la fecha formateada
 def obtener_fecha_formateada(fecha):
     fecha_objeto = datetime.fromisoformat(fecha)
     dia = fecha_objeto.strftime("%d")
@@ -22,10 +24,12 @@ def obtener_fecha_formateada(fecha):
     return f"{dia}-{mes}-{anio}"
 
 
+# Funcion que identifica los campos de la nota para luego guardarlos en otro metodo
 def guardar_nota_wrapper(titulo_entry, descripcion_text):
     guardar_nota(titulo_entry.get(), descripcion_text.get("1.0", END))
 
 
+# Funcion que agrega una nota
 def agregar_nota():
     global nueva_ventana
     nueva_ventana = Toplevel(window)
@@ -51,6 +55,7 @@ def agregar_nota():
     actualizar_menu_notas()
 
 
+# Funcion que guarda una nota
 def guardar_nota(titulo, descripcion):
     notaDTO = {"titulo": titulo, "descripcion": descripcion}
 
@@ -64,6 +69,7 @@ def guardar_nota(titulo, descripcion):
         messagebox.showerror("Error", "Ocurrió un error al agregar la nota.")
 
 
+# Funcion que elimina una nota
 def eliminar_nota(titulo):
     notaDTO = {"titulo": titulo}
     response = requests.delete("http://localhost:25030/nota/eliminar", json=notaDTO)
@@ -75,6 +81,7 @@ def eliminar_nota(titulo):
         messagebox.showerror("Error", "Ocurrió un error al eliminar la nota.")
 
 
+# Funcion que actualiza el menu de notas
 def actualizar_nota(titulo, descripcion):
     ventana_actualizar = Toplevel(window)
     ventana_actualizar.title("Actualizar Nota")
@@ -99,6 +106,7 @@ def actualizar_nota(titulo, descripcion):
     actualizar_button.pack()
 
 
+# Funcion que guarda la actualizacion de una nota
 def guardar_actualizacion(titulo, descripcion, descripcion_text):
     notaDTO = {"titulo": titulo, "descripcion": descripcion}
 
@@ -112,6 +120,7 @@ def guardar_actualizacion(titulo, descripcion, descripcion_text):
         messagebox.showerror("Error", "Ocurrió un error al actualizar la nota.")
 
 
+# Funcion que muestra las notas
 def mostrar_notas():
     for frame in window.winfo_children():
         if frame != menu_frame:
@@ -166,6 +175,7 @@ def mostrar_notas():
     scrollbar.pack(side="right", fill="y")
 
 
+# Funcion que actualiza el menu de notas
 def actualizar_menu_notas():
     opciones_menu.delete(0, END)
     opciones_menu.add_command(label="Salir", command=window.quit)
